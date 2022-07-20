@@ -9,29 +9,30 @@ module.exports = async function ({ getNamedAccounts, deployments }) {
     const { deploy, log } = deployments
     const { deployer } = await getNamedAccounts()
     const chainId = network.config.chainId
-
-    let VRFCoordinatorV2Address, subscriptionId, dogTokenURIs
+    let dogTokenURIs
 
     // get the IPFS hashes for the nft images
     if (process.env.UPLOAD_TO_PINATA == "true") {
         dogTokenURIs = await handleTokenURIs()
     }
+    let vrfCoordinatorV2Address, subscriptionId
 
-    if (developmentChains.includes(network.name)) {
-        const VRFCoordinatorV2Mock = await ethers.getContract("VRFCoordinatorV2Mock")
-        VRFCoordinatorV2Address = VRFCoordinatorV2Mock.address
-        const transaction = await VRFCoordinatorV2Mock.createSubscription()
-        const transactionRecipt = transaction.wait(1)
+    if (chainId == 31337) {
+        const vrfCoordinatorV2Mock = await ethers.getContract("VRFCoordinatorV2Mock")
+        vrfCoordinatorV2Address = vrfCoordinatorV2Mock.address
+        const transaction = await vrfCoordinatorV2Mock.createSubscription()
+        const transactionRecipt = await transaction.wait(1)
         subscriptionId = transactionRecipt.events[0].args.subId
+        //console.log(undefined.name)
     } else {
-        VRFCoordinatorV2Address = networkConfig[chainId].VRFCoordinatorV2
+        vrfCoordinatorV2Address = networkConfig[chainId].VRFCoordinatorV2
         subscriptionId = networkConfig[chainId].subscriptionId
     }
 
     log(`--------###-------!!!-------###----------`)
     await storeImages(imagesLocation)
     // const args = [
-    //     VRFCoordinatorV2Address,
+    //     vrfCoordinatorV2Address,
     //     subscriptionId,
     //     networkConfig[chainId].gasLane,
     //     networkConfig[chainId].callbackGasLimitj,
